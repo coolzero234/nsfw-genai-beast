@@ -1,116 +1,92 @@
 import streamlit as st
-from fal_client import FalClient
+import fal_client  # Import benar – underscore!
 from PIL import Image
-import requests
 from io import BytesIO
-import os
+import requests
+from utils import upload_references, enhance_nsfw_prompt  # Dari utils.py
 
-# --- Secrets (Paste di Streamlit Cloud Advanced Settings) ---
+# --- Secrets ---
 FAL_API_KEY = st.secrets.get("FAL_API_KEY")
 
 if not FAL_API_KEY:
-    st.error("FAL_API_KEY missing! Dapatkan gratis di fal.ai")
+    st.error("FAL_API_KEY missing! Dapatkan gratis credit di fal.ai")
     st.stop()
 
-client = FalClient(api_key=FAL_API_KEY)
+# fal_client setup (global atau direct run)
+fal_client.key = FAL_API_KEY  # Simple way
 
-st.set_page_config(page_title="NSFW GenAI Beast 2025", layout="wide")
-st.title("🦾 Ultimate Uncensored NSFW GenAI Beast")
-st.caption("Multi Face Ref + Pose + Background + Animate Video • Gratis Credit Fal.ai")
+st.set_page_config(page_title="NSFW Ultimate Beast 2025", layout="wide")
+st.title("🦾 Uncensored NSFW GenAI Monster – Fixed & Running")
+st.caption("Multi Face/Pose/Background Ref • Accurate Match • Animate Video • Fal.ai Power")
 
-# --- Upload Multi Face Reference ---
-st.subheader("Multi Face Reference (wajib untuk akurasi wajah)")
-face_files = st.file_uploader("Upload 1-5 foto wajah karakter (semakin banyak semakin akurat)", type=["png","jpg","jpeg"], accept_multiple_files=True)
+# --- Uploads ---
+st.subheader("Multi Face Reference (1-5 foto untuk wajah identik)")
+face_files = st.file_uploader("Upload foto wajah karakter", type=["png","jpg","jpeg"], accept_multiple_files=True)
 
-face_urls = []
-if face_files:
-    for file in face_files:
-        img = Image.open(file)
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        img_str = buffered.getvalue()
-        # Upload temporary ke fal (atau imgbb, tapi fal support direct bytes)
-        # Fal support multiple image inputs
-        face_urls.append({"image": img_str, "weight": 1.0})
+st.subheader("Pose Reference (ControlNet)")
+pose_file = st.file_uploader("Upload gambar pose/gaya", type=["png","jpg"])
 
-# --- Upload Pose Reference ---
-st.subheader("Pose Reference (ControlNet OpenPose/Canny)")
-pose_file = st.file_uploader("Upload gambar pose/gaya karakter (ControlNet)", type=["png","jpg"])
+st.subheader("Background Reference")
+bg_file = st.file_uploader("Upload background", type=["png","jpg"])
 
-pose_url = None
-if pose_file:
-    img = Image.open(pose_file)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    pose_url = {"image": buffered.getvalue(), "controlnet": "openpose"}
+# --- Prompt & Model ---
+prompt = st.text_area("Prompt NSFW explicit (no filter):", height=150)
+negative_prompt = st.text_input("Negative prompt:", "blurry, low quality, deformed")
 
-# --- Upload Background Reference ---
-st.subheader("Background Reference (IP-Adapter)")
-bg_file = st.file_uploader("Upload background reference", type=["png","jpg"])
-
-bg_url = None
-if bg_file:
-    img = Image.open(bg_file)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    bg_url = {"image": buffered.getvalue(), "adapter": "background"}
-
-# --- Prompt & Model Choice ---
-prompt = st.text_area("Prompt NSFW detail (explicit ok):", height=150)
-negative_prompt = st.text_input("Negative prompt (optional):", "blurry, deformed, ugly")
-
-model_options = [
-    "flux-dev-lora" ,  # NSFW capable
-    "sdxl-lightning",
-    "pony-diffusion-v6",
-    "realistic-vision-v6",
-    "animagine-xl-3.1"  # anime NSFW beast
+nsfw_models = [
+    "fal-ai/flux-dev-lora",
+    "fal-ai/pony-diffusion-v6",
+    "fal-ai/realistic-vision-v6",
+    "fal-ai/animagine-xl-3.1",
+    "fal-ai/sdxl-lightning"
 ]
-selected_model = st.selectbox("Pilih Model NSFW:", model_options)
+selected_model = st.selectbox("Pilih Model NSFW Uncensored:", nsfw_models)
 
-if st.button("Generate NSFW Masterpiece"):
+if st.button("Generate Ultra Accurate NSFW"):
     if not prompt:
-        st.error("Prompt wajib diisi")
+        st.error("Prompt wajib!")
     else:
-        with st.spinner("Generating ultra accurate NSFW image..."):
+        with st.spinner("Uploading references & generating NSFW masterpiece..."):
+            refs = upload_references(face_files, pose_file, bg_file)
+            
+            enhanced = enhance_nsfw_prompt(prompt)
+            
             input_data = {
-                "prompt": prompt,
-                "negative_prompt": negative_prompt or "bad quality",
-                "image_size": "portrait_9:16",
-                "num_inference_steps": 28,
-                "guidance_scale": 7.5,
-                "sync": True
+                "prompt": enhanced,
+                "negative_prompt": negative_prompt,
+                "num_inference_steps": 30,
+                "guidance_scale": 7.0,
+                "image_size": "square"
             }
-
-            # Add multi face reference
-            if face_urls:
-                input_data["ip_adapter_image"] = face_urls  # fal support list
-
-            # Add pose
-            if pose_url:
-                input_data["controlnet_image"] = pose_url["image"]
+            
+            # Multi face ref (fal support list URL)
+            if refs["face_urls"]:
+                input_data["ip_adapter_image"] = refs["face_urls"]
+            
+            # Pose ControlNet
+            if refs["pose_url"]:
+                input_data["controlnet_image"] = refs["pose_url"]
                 input_data["controlnet_conditioning_scale"] = 1.0
-
-            # Add background
-            if bg_url:
-                input_data["ip_adapter_background"] = bg_url["image"]
-
-            result = client.run(f"fal-ai/{selected_model}", arguments=input_data)
+            
+            # Background IP-Adapter
+            if refs["bg_url"]:
+                input_data["ip_adapter_background"] = refs["bg_url"]
+            
+            result = fal_client.run(selected_model, arguments=input_data)
             image_url = result["images"][0]["url"]
-
-            st.image(image_url, caption="NSFW Result – Ultra Accurate Reference Match", use_column_width=True)
-
-            # --- Animate to Video Button ---
-            if st.button("Animate to Video (Image to Video NSFW)"):
-                with st.spinner("Animating to NSFW video..."):
-                    video_result = client.run("fal-ai/ltx-video", arguments={
+            
+            st.image(image_url, caption="NSFW Result – Wajah/Pose/Background Super Akurat", use_column_width=True)
+            
+            # Animate Button
+            if st.button("Animate Hasil ke Video NSFW (Image to Video)"):
+                with st.spinner("Animating NSFW video cinematic..."):
+                    video_result = fal_client.run("fal-ai/ltx-video", arguments={
                         "image_url": image_url,
-                        "prompt": f"{prompt}, smooth motion, cinematic",
-                        "duration": 5
+                        "prompt": f"{enhanced}, smooth erotic motion, high quality"
                     })
                     video_url = video_result["video"]["url"]
                     st.video(video_url)
-                    st.success("NSFW Video selesai – full motion dari reference lo!")
+                    st.success("NSFW Video selesai – full motion explicit!")
 
 from utils import upload_references, enhance_nsfw_prompt, get_nsfw_models
 
