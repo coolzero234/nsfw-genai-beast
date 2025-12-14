@@ -1,5 +1,4 @@
 import streamlit as st
-pip install fal-client
 import fal-client  # Import benar – underscore setelah install fal-client
 from PIL import Image
 from io import BytesIO
