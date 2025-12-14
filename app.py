@@ -112,3 +112,10 @@ if st.button("Generate NSFW Masterpiece"):
                     st.video(video_url)
                     st.success("NSFW Video selesai – full motion dari reference lo!")
 
+from utils import upload_references, enhance_nsfw_prompt, get_nsfw_models
+
+# Di dalam generate button
+references = upload_references(face_files, pose_file, bg_file)
+
+# Gunakan references["face_urls"] dll untuk prompt atau API
+enhanced_prompt = enhance_nsfw_prompt(prompt)
