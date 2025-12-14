@@ -1,5 +1,5 @@
 import streamlit as st
-import @fal_ai/client  # Import benar – underscore setelah install fal-client
+import fal-client  # Import benar – underscore setelah install fal-client
 from PIL import Image
 from io import BytesIO
 import requests
