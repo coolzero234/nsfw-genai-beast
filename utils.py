@@ -89,3 +89,20 @@ def get_more_nsfw_models():
         "fal-ai/animagine-xl-3.1",
         "fal-ai/hyper-sdxl"
             ]
+
+def get_venice_link(prompt: str, reference_url: str = None):
+    base = "https://venice.ai/image-generation"
+    params = f"?prompt={prompt.replace(' ', '%20')}"
+    if reference_url:
+        params += f"&reference={reference_url}"
+    return base + params
+
+def get_perchance_link(prompt: str, reference_url: str = None):
+    base = "https://perchance.org/ai-text-to-image-generator"
+    params = f"?prompt={prompt.replace(' ', '%20')}"
+    if reference_url:
+        params += f"&referenceImage={reference_url}"
+    return base + params
+
+def get_perchance_video_link(image_url: str, motion_prompt: str = "smooth dancing, cinematic camera"):
+    return f"https://perchance.org/ai-text-to-video-generator?image={image_url}&prompt={motion_prompt.replace(' ', '%20')}"
