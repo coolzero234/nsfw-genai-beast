@@ -1,8 +1,4 @@
 streamlit
-langchain
-langgraph
-langchain-community
-replicate  # kalau mau fallback
-fal-client  # untuk fal.ai API
+fal-client  # Ini yang benar – hyphen!
 pillow
 requests
