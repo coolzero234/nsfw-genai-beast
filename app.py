@@ -1,5 +1,5 @@
 import streamlit as st
-import fal_client  # Import benar – underscore!
+import fal_client 
 from PIL import Image
 from io import BytesIO
 import requests
