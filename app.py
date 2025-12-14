@@ -95,3 +95,25 @@ references = upload_references(face_files, pose_file, bg_file)
 
 # Gunakan references["face_urls"] dll untuk prompt atau API
 enhanced_prompt = enhance_nsfw_prompt(prompt)
+
+# --- Fallback Gratis Venice.ai & Perchance.org ---
+st.subheader("Fallback Gratis Unlimited (kalau Fal credit habis)")
+
+# Venice.ai link (web version support prompt pre-fill via URL param)
+venice_url = f"https://venice.ai/image-generation?prompt={enhanced_prompt.replace(' ', '%20')}"
+if refs["face_urls"]:
+    venice_url += f"&reference={refs['face_urls'][0]}"
+
+st.markdown(f"[Generate Gratis Uncensored di Venice.ai (Private & Powerful)]({venice_url})")
+
+# Perchance.org link (support image reference + prompt)
+perchance_url = f"https://perchance.org/ai-text-to-image-generator?prompt={enhanced_prompt.replace(' ', '%20')}"
+if refs["face_urls"]:
+    perchance_url += f"&referenceImage={refs['face_urls'][0]}"
+
+st.markdown(f"[Generate Unlimited Gratis di Perchance.org (No Login, Truly Uncensored)]({perchance_url})")
+
+# Bonus: Perchance Video Animate Fallback
+if "image_url" in locals():
+    perchance_video = f"https://perchance.org/ai-text-to-video-generator?image={image_url}&prompt=smooth erotic motion, cinematic"
+    st.markdown(f"[Animate Gratis ke Video di Perchance (Unlimited)]({perchance_video})")
