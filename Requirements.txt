@@ -1,4 +1,4 @@
 streamlit
-fal_client  
+fal-client  # Hyphen! Ini yang bikin install berhasil
 pillow
 requests
