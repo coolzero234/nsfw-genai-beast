@@ -1,6 +1,4 @@
 streamlit
-fal-client  # Hyphen! Ini yang bikin install berhasil
 fal-client
-fal_client
 pillow
 requests
