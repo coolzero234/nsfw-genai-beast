@@ -1,1 +1,8 @@
-FAL_API_KEY = "6860d8de-a879-4f18-ad70-3e7fafe24d09:d4aaed10e597154ee34956817727ff17"
+streamlit
+langchain
+langgraph
+langchain-community
+replicate  # kalau mau fallback
+fal-client  # untuk fal.ai API
+pillow
+requests
