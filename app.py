@@ -1,54 +1,52 @@
 import streamlit as st
-import fal-client  # Import benar – underscore setelah install fal-client
+import fal_client
 from PIL import Image
 from io import BytesIO
 import requests
-from utils import upload_references, enhance_nsfw_prompt
+from utils import upload_references, enhance_nsfw_prompt, get_venice_link, get_perchance_link, get_perchance_video_link
 
 # --- Secrets ---
 FAL_API_KEY = st.secrets.get("FAL_API_KEY")
 
 if not FAL_API_KEY:
-    st.error("FAL_API_KEY missing! Dapatkan gratis credit besar di fal.ai")
+    st.error("FAL_API_KEY missing! Dapatkan gratis credit di fal.ai")
     st.stop()
 
-# Set global key
 fal_client.key = FAL_API_KEY
 
-st.set_page_config(page_title="NSFW Beast 2025 Final Fixed", layout="wide")
-st.title("🦾 Ultimate Uncensored NSFW GenAI Monster – No More Errors")
-st.caption("Multi Face/Pose/Background Accurate • Animate Video • Fal.ai Uncensored Power")
+st.set_page_config(page_title="Ultimate NSFW Beast 2025", layout="wide")
+st.title("🦾 Ultimate Uncensored NSFW GenAI Beast")
+st.caption("Multi Reference Accurate • Animate Video • Fal.ai + Venice.ai + Perchance Fallback Gratis Unlimited")
 
-# --- Uploads Multi Reference ---
-st.subheader("Multi Face Reference (upload 1-5 foto wajah untuk match identik)")
-face_files = st.file_uploader("Foto wajah karakter", type=["png","jpg","jpeg"], accept_multiple_files=True)
+# --- Upload References ---
+st.subheader("Multi Face Reference (1-5 foto untuk wajah identik)")
+face_files = st.file_uploader("Upload foto wajah karakter", type=["png","jpg","jpeg"], accept_multiple_files=True)
 
-st.subheader("Pose Reference (ControlNet OpenPose/Canny)")
-pose_file = st.file_uploader("Gambar pose/gaya karakter", type=["png","jpg"])
+st.subheader("Pose Reference (ControlNet)")
+pose_file = st.file_uploader("Upload gambar pose/gaya", type=["png","jpg"])
 
-st.subheader("Background Reference (IP-Adapter)")
-bg_file = st.file_uploader("Background reference", type=["png","jpg"])
+st.subheader("Background Reference")
+bg_file = st.file_uploader("Upload background reference", type=["png","jpg"])
 
-# --- Prompt & Model Choice ---
-prompt = st.text_area("Prompt NSFW explicit (no filter, detail apapun ok):", height=150)
-negative_prompt = st.text_input("Negative prompt (optional):", "blurry, deformed, bad anatomy, low quality")
+# --- Prompt & Model ---
+prompt = st.text_area("Prompt NSFW explicit (apa aja ok):", height=150)
+negative_prompt = st.text_input("Negative prompt:", "blurry, deformed, low quality, bad anatomy")
 
 nsfw_models = [
-    "fal-ai/flux-dev-lora",           # NSFW ultra capable
-    "fal-ai/pony-diffusion-v6",       # Pony NSFW beast
-    "fal-ai/realistic-vision-v6",     # Realistic NSFW
-    "fal-ai/animagine-xl-3.1",        # Anime NSFW
-    "fal-ai/sdxl-lightning"           # Fast NSFW
+    "fal-ai/flux-dev-lora",
+    "fal-ai/pony-diffusion-v6",
+    "fal-ai/realistic-vision-v6",
+    "fal-ai/animagine-xl-3.1",
+    "fal-ai/sdxl-lightning"
 ]
-selected_model = st.selectbox("Pilih Model Uncensored NSFW:", nsfw_models)
+selected_model = st.selectbox("Model Fal.ai NSFW Uncensored:", nsfw_models)
 
-if st.button("Generate Ultra Accurate NSFW Masterpiece"):
+if st.button("Generate Ultra Accurate NSFW (Fal.ai)"):
     if not prompt:
-        st.error("Prompt wajib diisi Master!")
+        st.error("Prompt wajib diisi!")
     else:
-        with st.spinner("Uploading references & generating explicit NSFW..."):
+        with st.spinner("Uploading references & generating dengan Fal.ai..."):
             refs = upload_references(face_files, pose_file, bg_file)
-            
             enhanced_prompt = enhance_nsfw_prompt(prompt)
             
             input_data = {
@@ -59,61 +57,49 @@ if st.button("Generate Ultra Accurate NSFW Masterpiece"):
                 "image_size": "portrait_9:16"
             }
             
-            # Multi face IP-Adapter
             if refs["face_urls"]:
-                input_data["ip_adapter_image"] = refs["face_urls"]  # List URL untuk multi face
+                input_data["ip_adapter_image"] = refs["face_urls"]
             
-            # Pose ControlNet
             if refs["pose_url"]:
                 input_data["controlnet_image"] = refs["pose_url"]
                 input_data["controlnet_conditioning_scale"] = 1.0
             
-            # Background IP-Adapter
             if refs["bg_url"]:
                 input_data["ip_adapter_background"] = refs["bg_url"]
             
-            result = fal_client.run(selected_model, arguments=input_data)
-            image_url = result["images"][0]["url"]
-            
-            st.image(image_url, caption="NSFW Result – Wajah/Pose/Background Match Sempurna", use_column_width=True)
-            
-            # Animate to Video Button
-            if st.button("Animate ke Video NSFW Cinematic (Image to Video Explicit)"):
-                with st.spinner("Animating explicit motion video..."):
-                    video_result = fal_client.run("fal-ai/ltx-video", arguments={
-                        "image_url": image_url,
-                        "prompt": f"{enhanced_prompt}, smooth erotic movement, high detail"
-                    })
-                    video_url = video_result["video"]["url"]
-                    st.video(video_url)
-                    st.success("NSFW Video selesai – full explicit motion dari reference lo!")
+            try:
+                result = fal_client.run(selected_model, arguments=input_data)
+                image_url = result["images"][0]["url"]
+                
+                st.image(image_url, caption="Hasil Fal.ai – Wajah/Pose/Background Super Akurat", use_column_width=True)
+                
+                # Animate Video Button
+                if st.button("Animate ke Video NSFW Cinematic"):
+                    with st.spinner("Animating video explicit..."):
+                        video_result = fal_client.run("fal-ai/ltx-video", arguments={
+                            "image_url": image_url,
+                            "prompt": f"{enhanced_prompt}, smooth erotic motion, high detail"
+                        })
+                        video_url = video_result["video"]["url"]
+                        st.video(video_url)
+                        st.success("Video NSFW selesai – full explicit motion!")
+                        
+            except Exception as e:
+                st.error(f"Fal.ai error (mungkin credit habis): {e}")
+                st.info("Gunakan fallback gratis di bawah ini!")
 
-from utils import upload_references, enhance_nsfw_prompt, get_nsfw_models
+        # --- Fallback Venice.ai + Perchance.org ---
+        st.subheader("Fallback Gratis Unlimited Uncensored")
+        
+        primary_ref = refs["face_urls"][0] if refs["face_urls"] else None
+        
+        venice_link = get_venice_link(enhanced_prompt, primary_ref)
+        perchance_link = get_perchance_link(enhanced_prompt, primary_ref)
+        perchance_video_link = get_perchance_video_link(image_url if 'image_url' in locals() else primary_ref)
+        
+        st.markdown(f"**Generate Gratis Powerful & Private:** [Venice.ai]({venice_link})")
+        st.markdown(f"**Generate Unlimited No Login:** [Perchance.org Image]({perchance_link})")
+        if 'image_url' in locals():
+            st.markdown(f"**Animate Gratis ke Video:** [Perchance.org Video]({perchance_video_link})")
 
-# Di dalam generate button
-references = upload_references(face_files, pose_file, bg_file)
-
-# Gunakan references["face_urls"] dll untuk prompt atau API
-enhanced_prompt = enhance_nsfw_prompt(prompt)
-
-# --- Fallback Gratis Venice.ai & Perchance.org ---
-st.subheader("Fallback Gratis Unlimited (kalau Fal credit habis)")
-
-# Venice.ai link (web version support prompt pre-fill via URL param)
-venice_url = f"https://venice.ai/image-generation?prompt={enhanced_prompt.replace(' ', '%20')}"
-if refs["face_urls"]:
-    venice_url += f"&reference={refs['face_urls'][0]}"
-
-st.markdown(f"[Generate Gratis Uncensored di Venice.ai (Private & Powerful)]({venice_url})")
-
-# Perchance.org link (support image reference + prompt)
-perchance_url = f"https://perchance.org/ai-text-to-image-generator?prompt={enhanced_prompt.replace(' ', '%20')}"
-if refs["face_urls"]:
-    perchance_url += f"&referenceImage={refs['face_urls'][0]}"
-
-st.markdown(f"[Generate Unlimited Gratis di Perchance.org (No Login, Truly Uncensored)]({perchance_url})")
-
-# Bonus: Perchance Video Animate Fallback
-if "image_url" in locals():
-    perchance_video = f"https://perchance.org/ai-text-to-video-generator?image={image_url}&prompt=smooth erotic motion, cinematic"
-    st.markdown(f"[Animate Gratis ke Video di Perchance (Unlimited)]({perchance_video})")
+st.info("Fal.ai = akurat multi reference + video. Venice.ai = private powerful. Perchance = unlimited gratis no filter. Pilih sesuai kebutuhan Master!")
