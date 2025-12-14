@@ -102,7 +102,6 @@ if st.button("Generate Ultra Accurate NSFW (Fal.ai Primary)"):
 
 st.success("App running 100%! Fal.ai = akurat reference + video. Venice = private. Perchance = unlimited. Generate NSFW chaos bebas Master!")
 
-**utils.py (Sudah Ada, Pastikan Sama)**
 ```python
 import requests
 from PIL import Image
